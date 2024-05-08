@@ -215,6 +215,33 @@ identified by a map key (or set member) from the value provided to `for_each`.
 This is different from resources and modules without `count` or `for_each`, which can be
 referenced without an index or key.
 
+For example, if you had a user resource that has a `for_each` element
+
+```hcl
+resource "aws_iam_user" "user" {
+  for_each = toset(["Todd", "James", "Alice", "Dottie"])
+  name     = each.key
+}
+```
+
+You could refer to a specific user as follows
+
+```hcl
+resource "aws_iam_user_policy" "user_policy" {
+  name = "user_policy"
+  user = aws_iam_user.user["Alice"].name
+}
+```
+
+Because `for_each` returns a map object, the traditional 'splat' syntax works a little differently. For Example, to get a list of all user name, the  `values` function can be used.
+
+```hcl
+resource "aws_iam_group_membership" "team" {
+  name = "tf-testing-group-membership"
+  user = values(aws_iam_user.user)[*].name
+}
+```
+
 Similarly, resources from child modules with multiple instances are prefixed
 with `module.<NAME>[<KEY>]` when displayed in plan output and elsewhere in the UI.
 For a module without `count` or `for_each`, the address will not contain
